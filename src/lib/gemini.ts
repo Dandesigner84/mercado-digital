@@ -1,8 +1,25 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("GEMINI_API_KEY is not set. AI features will be disabled.");
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function getShoppingAssistantResponse(prompt: string, history: any[] = []) {
+  const ai = getAI();
+  if (!ai) {
+    return "Desculpe, o assistente de IA não está configurado no momento. Como posso ajudar com suas compras manualmente?";
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -26,6 +43,9 @@ export async function getShoppingAssistantResponse(prompt: string, history: any[
 export async function getProductSuggestions(cartItems: string[]) {
   if (cartItems.length === 0) return [];
   
+  const ai = getAI();
+  if (!ai) return [];
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
