@@ -1,0 +1,192 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with role and condominium association",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin", "partner", "driver"] },
+        "condominioId": { "type": "string", "description": "ID of the condominium the user belongs to" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Condominium": {
+      "title": "Condominium",
+      "description": "Condominium details and delivery rules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "numApartments": { "type": "number" },
+        "deliveryRules": { "type": "string" },
+        "authorizedDrivers": { "type": "array", "description": "List of driver UIDs" },
+        "consumptionPatterns": { "type": "object", "description": "AI-generated consumption insights" }
+      },
+      "required": ["name", "address"]
+    },
+    "Partner": {
+      "title": "Partner",
+      "description": "Market or Bakery partner",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["padaria", "mercado", "hortifruti"] },
+        "address": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "active", "blocked"] },
+        "ownerEmail": { "type": "string", "format": "email" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "status", "ownerEmail"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Generic product definition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "images": { "type": "array" },
+        "unit": { "type": "string", "enum": ["kg", "litro", "unidade"] },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["name", "category", "status"]
+    },
+    "ProductVariation": {
+      "title": "Product Variation",
+      "description": "Specific brand/price/weight variation from a partner",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "partnerId": { "type": "string" },
+        "brand": { "type": "string" },
+        "price": { "type": "number" },
+        "weight": { "type": "string" },
+        "stock": { "type": "number" },
+        "packagingImage": { "type": "string" }
+      },
+      "required": ["productId", "partnerId", "brand", "price"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "condominioId": { "type": "string" },
+        "partnerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["received", "preparing", "ready", "delivering", "completed"] },
+        "total": { "type": "number" },
+        "type": { "type": "string", "enum": ["single", "recurring"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "condominioId", "status", "total"]
+    },
+    "OrderItem": {
+      "title": "Order Item",
+      "description": "Individual item within an order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "variationId": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unitPrice": { "type": "number" }
+      },
+      "required": ["orderId", "variationId", "quantity", "unitPrice"]
+    },
+    "Delivery": {
+      "title": "Delivery",
+      "description": "Delivery tracking for an order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderId": { "type": "string" },
+        "driverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["waiting", "picked_up", "in_route", "delivered"] },
+        "departureTime": { "type": "string", "format": "date-time" },
+        "deliveryTime": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "status"]
+    },
+    "DeliveryDriver": {
+      "title": "Delivery Driver",
+      "description": "Driver details and authorization",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "authorizedCondos": { "type": "array", "description": "List of condominium IDs" }
+      },
+      "required": ["uid", "name", "status"]
+    },
+    "AdminLog": {
+      "title": "Admin Log",
+      "description": "Audit log for administrative actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "adminId": { "type": "string" },
+        "action": { "type": "string" },
+        "entityType": { "type": "string" },
+        "entityId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminId", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/condominiums/{condoId}": {
+      "schema": "Condominium",
+      "description": "Condominium registry"
+    },
+    "/partners/{partnerId}": {
+      "schema": "Partner",
+      "description": "Market partners"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Generic product catalog"
+    },
+    "/productVariations/{variationId}": {
+      "schema": "ProductVariation",
+      "description": "Specific product variations per partner"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer orders"
+    },
+    "/orders/{orderId}/items/{itemId}": {
+      "schema": "OrderItem",
+      "description": "Items within an order"
+    },
+    "/deliveries/{deliveryId}": {
+      "schema": "Delivery",
+      "description": "Delivery tracking"
+    },
+    "/drivers/{driverId}": {
+      "schema": "DeliveryDriver",
+      "description": "Delivery driver registry"
+    },
+    "/adminLogs/{logId}": {
+      "schema": "AdminLog",
+      "description": "Administrative audit logs"
+    }
+  }
+}
