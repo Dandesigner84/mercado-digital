@@ -12,6 +12,12 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [view, setView] = useState<'store' | 'admin'>('store');
   const [adminTab, setAdminTab] = useState<'overview' | 'products' | 'partners' | 'orders'>('overview');
+  const [adminOrders, setAdminOrders] = useState([
+    { id: '#8492', user: 'João Silva (Apto 102)', partner: 'Padaria Central', status: 'Em Separação', driver: 'Carlos M.', items: ['Pão Francês (10)', 'Leite Integral (2)'], total: 'R$ 15,00' },
+    { id: '#8491', user: 'Maria Oliveira (Apto 405)', partner: 'Silva Mercado', status: 'Pronto', driver: 'Ana P.', items: ['Arroz Tio João (1)', 'Feijão Camil (2)'], total: 'R$ 42,50' },
+    { id: '#8490', user: 'Pedro Santos (Apto 1201)', partner: 'Horti Vila', status: 'Entregue', driver: 'Carlos M.', items: ['Banana Nanica (1kg)', 'Maçã Gala (500g)'], total: 'R$ 12,80' },
+  ]);
+  const [selectedAdminOrder, setSelectedAdminOrder] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
@@ -182,7 +188,7 @@ export default function App() {
                     { id: 'overview', label: 'Dashboard', icon: BarChart3 },
                     { id: 'products', label: 'Produtos', icon: Package },
                     { id: 'partners', label: 'Parceiros', icon: Store },
-                    { id: 'orders', label: 'Operação', icon: Truck },
+                    { id: 'orders', label: 'Processar Pedidos', icon: Truck },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -368,8 +374,13 @@ export default function App() {
 
               {adminTab === 'orders' && (
                 <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
-                  <div className="p-6 border-b border-white/10">
-                    <h3 className="text-xl font-bold">Monitor de Operação</h3>
+                  <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                    <h3 className="text-xl font-bold">Gestão de Pedidos Pendentes</h3>
+                    <div className="flex gap-2">
+                      <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold">
+                        {adminOrders.filter(o => o.status !== 'Entregue').length} Pendentes
+                      </span>
+                    </div>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -378,33 +389,33 @@ export default function App() {
                           <th className="px-6 py-4">ID Pedido</th>
                           <th className="px-6 py-4">Morador</th>
                           <th className="px-6 py-4">Parceiro</th>
+                          <th className="px-6 py-4">Total</th>
                           <th className="px-6 py-4">Status</th>
-                          <th className="px-6 py-4">Entregador</th>
                           <th className="px-6 py-4">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
-                        {[
-                          { id: '#8492', user: 'João Silva (Apto 102)', partner: 'Padaria Central', status: 'Em Separação', driver: 'Carlos M.' },
-                          { id: '#8491', user: 'Maria Oliveira (Apto 405)', partner: 'Silva Mercado', status: 'Pronto', driver: 'Ana P.' },
-                          { id: '#8490', user: 'Pedro Santos (Apto 1201)', partner: 'Horti Vila', status: 'Entregue', driver: 'Carlos M.' },
-                        ].map((o) => (
+                        {adminOrders.map((o) => (
                           <tr key={o.id} className="hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4 font-mono text-blue-400">{o.id}</td>
                             <td className="px-6 py-4 font-medium">{o.user}</td>
                             <td className="px-6 py-4 text-slate-400">{o.partner}</td>
+                            <td className="px-6 py-4 text-slate-400">{o.total}</td>
                             <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${o.status === 'Entregue' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-400'}`}>
+                              <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${
+                                o.status === 'Entregue' ? 'bg-green-500/10 text-green-500' : 
+                                o.status === 'Pronto' ? 'bg-purple-500/10 text-purple-400' :
+                                'bg-blue-500/10 text-blue-400'
+                              }`}>
                                 {o.status}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-slate-400">{o.driver}</td>
                             <td className="px-6 py-4">
                               <button 
-                                onClick={() => addNotification(`Status do pedido ${o.id} atualizado`)}
+                                onClick={() => setSelectedAdminOrder(o)}
                                 className="text-xs font-bold text-blue-400 hover:underline"
                               >
-                                Atualizar
+                                Gerenciar
                               </button>
                             </td>
                           </tr>
@@ -421,6 +432,95 @@ export default function App() {
 
       {/* UI Overlays (Cart, Assistant, Modals) */}
       <AnimatePresence>
+        {/* Order Processing Modal */}
+        <AnimatePresence>
+          {selectedAdminOrder && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedAdminOrder(null)}
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl"
+              >
+                <div className="p-8">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="text-2xl font-bold mb-1">Processar Pedido {selectedAdminOrder.id}</h3>
+                      <p className="text-slate-400 text-sm">{selectedAdminOrder.user}</p>
+                    </div>
+                    <button 
+                      onClick={() => setSelectedAdminOrder(null)}
+                      className="p-2 hover:bg-white/5 rounded-full transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Itens do Pedido</h4>
+                      <ul className="space-y-2">
+                        {selectedAdminOrder.items.map((item: string) => (
+                          <li key={item} className="text-sm flex justify-between">
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-4 pt-4 border-t border-white/5 flex justify-between font-bold">
+                        <span>Total</span>
+                        <span className="text-blue-400">{selectedAdminOrder.total}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Atualizar Status</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['Em Separação', 'Pronto', 'Em Rota', 'Entregue'].map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => {
+                              setAdminOrders(prev => prev.map(o => o.id === selectedAdminOrder.id ? { ...o, status } : o));
+                              setSelectedAdminOrder(null);
+                              addNotification(`Pedido ${selectedAdminOrder.id} atualizado para ${status}`);
+                            }}
+                            className={`p-3 rounded-xl text-xs font-bold transition-all border ${
+                              selectedAdminOrder.status === status 
+                                ? 'bg-blue-600 border-blue-500 text-white' 
+                                : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+                      <button
+                        onClick={() => {
+                          setAdminOrders(prev => prev.map(o => o.id === selectedAdminOrder.id ? { ...o, status: 'Entregue' } : o));
+                          setSelectedAdminOrder(null);
+                          addNotification(`Pedido ${selectedAdminOrder.id} finalizado com sucesso!`);
+                        }}
+                        className="flex-1 bg-green-600 hover:bg-green-500 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-green-600/20"
+                      >
+                        Finalizar Pedido
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Notifications */}
         <div className="fixed top-20 right-6 z-[200] space-y-2 pointer-events-none">
           {notifications.map(n => (
