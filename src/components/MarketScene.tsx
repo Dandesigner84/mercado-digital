@@ -270,7 +270,7 @@ export default function MarketScene({ onProductSelect }: { onProductSelect: (p: 
 
   return (
     <div className="w-full h-full bg-slate-900">
-      <Canvas shadows dpr={[1, 2]}>
+      <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]}>
         <PerspectiveCamera makeDefault position={[0, 8, 15]} fov={50} />
         <OrbitControls 
           enableDamping 

@@ -75,8 +75,14 @@ export default function App() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+      addNotification("Login realizado com sucesso!", "success");
+    } catch (error: any) {
       console.error("Login error:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        addNotification("Erro: Domínio não autorizado no Firebase. Adicione este domínio nas configurações do Firebase Auth.", "error");
+      } else {
+        addNotification("Erro ao realizar login. Tente novamente.", "error");
+      }
     }
   };
 
